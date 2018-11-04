@@ -105,10 +105,14 @@ void* mmap(void *addr, size_t len, int prot, int flags, int fildes, OffsetType o
         return MAP_FAILED;
     }
 
-    fm = CreateFileMapping(h, NULL, protect, dwMaxSizeHigh, dwMaxSizeLow, NULL);
+    fm = CreateFileMapping(h, NULL, PAGE_READWRITE, dwMaxSizeHigh, dwMaxSizeLow, NULL);
 
     if (fm == NULL)
     {
+        DWORD dw = GetLastError();
+        void* str;
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), &str, 0, NULL);
+        printf("CreateFileMapping failed (%d, %s)\n", dw, str);
         errno = __map_mman_error(GetLastError(), EPERM);
         return MAP_FAILED;
     }
@@ -119,6 +123,7 @@ void* mmap(void *addr, size_t len, int prot, int flags, int fildes, OffsetType o
   
     if (map == NULL)
     {
+        printf("MapViewOfFile failed\n");
         errno = __map_mman_error(GetLastError(), EPERM);
         return MAP_FAILED;
     }
